@@ -1,25 +1,22 @@
-
+const db = require('../database/db');
 const { statusMessage, statusCodes } = require('../configs');
-const db = require('../app')
 
 module.exports = {
     getAllTodos: (req, res, next) => {
         try {
+           const todos = db.prepare('SELECT * FROM todos').all(req.body);
 
+           res.json(todos)
         } catch (e) {
             next(e);
         }
     },
+
     createTodo: (req, res, next) => {
         try {
+            const { title } = req.body;
 
-            //const stmt = db.prepare('INSERT INTO todos VALUES (?)');
-            //console.log(stmt);
-            console.log(db);
-
-           const stmt = db.prepare('INSERT INTO todos VALUES ($title)');
-
-            stmt.run(req.body.title);
+            db.prepare("INSERT INTO todos (title) VALUES (?)").run(title);
 
             res.status(statusCodes.created).json(statusMessage.created);
         } catch (e) {
@@ -28,7 +25,10 @@ module.exports = {
     },
     updateTodo: (req, res, next) => {
         try {
+            const { id } = req.params;
+            const { title } = req.body;
 
+            db.prepare('UPDATE todos SET title = ? WHERE id = ?').run(title, id);
 
             res.status(statusCodes.updated).json(statusMessage.updated);
         } catch (e) {
@@ -39,6 +39,8 @@ module.exports = {
         try {
             const { id } = req.params;
 
+            db.prepare('DELETE FROM todos WHERE id = ?').run(id);
+
             res.status(statusCodes.deleted).json(statusMessage.deleted);
         } catch (e) {
             next(e);
@@ -47,6 +49,8 @@ module.exports = {
     getTodo: (req, res, next) => {
         try {
             const { id } = req.params;
+
+            const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
 
             res.json(todo);
         } catch (e) {
